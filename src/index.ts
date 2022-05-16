@@ -3,6 +3,7 @@ import epnsNotify from './epnsNotifyHelper';
 import { ethers } from 'ethers';
 import logger from './logger';
 import config from './config';
+import { SendNotificationOptionsType } from './types'
 
 function getEPNSInteractableContract(
   epnsSettings: EPNSSettings,
@@ -135,6 +136,44 @@ export default class NotificationHelper {
   }
 
   /**
+   * Send Notification V2
+   * @description Sends notification Options version
+   * @param options
+   */
+  public async sendNotificationV2(options : SendNotificationOptionsType) {
+    const {
+      user,
+      title,
+      message,
+      payloadTitle,
+      payloadMsg,
+      notificationType,
+      cta,
+      img,
+      simulate = null,
+      offChain = true,
+      returnPayload = false
+    } = options;
+
+    // call the original "sendNotification()"
+    return this.sendNotification(
+      user,
+      title,
+      message,
+      payloadTitle || title,
+      payloadMsg || message,
+      notificationType,
+      cta,
+      img,
+      simulate,
+      {
+        offChain,
+        returnPayload
+      }
+    );
+  }
+
+  /**
    * Send Notification
    * @description Sends notification to a particular user
    * @param user User Address
@@ -153,7 +192,10 @@ export default class NotificationHelper {
     cta: string | undefined,
     img: string | undefined,
     simulate: any,
-    { offChain = true, returnPayload = false } = {}, //add optional parameter for offchain sending of notification
+    { 
+      offChain = true,
+      returnPayload = false
+    } = {}, //add optional parameter for offchain sending of notification
   ) {
     const channelAddress = this.channelAddress;
     // check if offchain notification is enabled and send a different notification type

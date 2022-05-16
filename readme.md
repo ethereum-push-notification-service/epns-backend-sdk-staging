@@ -44,7 +44,25 @@ const response = await epnsSdk.sendNotification(
     );
     console.log(response)
 ```
+### *sendNotificationV2()
 
+We also have a more flexible way to call the sendNotifications() where you can pass the options as an object with key/value pair (below are dummy values)
+
+```typescript
+const response = await epnsSdk.sendNotification({
+  user: '0xD8a238C21e8663b65C423c33bC8620bba10006af', // user address
+  title: 'Hello, World!',
+  message: 'This is a Test Notification',
+  payloadTitle: 'Some test title', // optional, if not passed we take "title"
+  payloadMsg: 'Please read this message', // optional, if not passed we take "message"
+  notificationType: 3,
+  cta: 'https://epns.io', // optional
+  img: 'https://backend-kovan.epns.io/assets/ethereum.org.ico', // optional
+  simulate: null, // optional
+  offChain: true, // optional
+  returnPayload: true // optional
+});
+```
 
 ## API
 
