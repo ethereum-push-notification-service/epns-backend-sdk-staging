@@ -66,13 +66,13 @@ new EpnsSDK(
 ```
 | Parameter | Description  | Default Value| 
 |--|--|--|
-| channelKey | The private key of the account used to [create a channel on EPNS](https://staging-app.epns.io/)  | N/A (This is the only parameter that is required) |
+| channelKey | The private key of the account used to [create a channel on EPNS](https://staging-app.epns.io/) or of a [delegated account](https://whitepaper.epns.io/protocol-specs-section/epns-protocol/sending-notifications/delegation-of-notifications) | N/A (This is the only parameter that is required) |
 | communicatorContractAddress | an override parameter if you intend to use a different communicator contract from the staging one| For `Kovan Network`:`0x87da9Af1899ad477C67FeA31ce89c1d2435c77DC` and for `Polygon Network`: `0xD2ee1e96e3592d5945dDc1808834d7EE67400823`|
 |communicatorContractABI| The ABI of the communicator contract specified| Defaults to the latest communicator contract published by EPNS|
 |channelAddress| The ethereum address used to create the channel|defaults to `ethers.utils.computeAddress(channelKey)` which is the public key of the specified private key|
 |networkKeys|These are important if you want to perform any on chain activities, you will have to provide infura keys|The type of the object containing the keys are as follows `interface  NetWorkSettings {alchemy?: string;infura?: {projectID: string;projectSecret:string;};etherscan?: string;}`|
-|notificationChainId|The chain on which you want to send notifications| defaults to `42` which is for the kovan network, other option is `80001` which is for the kovan network|
-|networkToMonitor|The SDK has a method to get a contract, this parameter specifies the chain to fetch contracts for when initialising a contract using the SDK, it| defaults to `42` which is for the kovan network, but it could potentially be any evm compatible chain.|
+|notificationChainId|The chain on which you want to send notifications| defaults to `42` which is for the `Kovan Network`, other option is `80001` which is for the `Polygon Network`|
+|networkToMonitor|The SDK has a method to get a contract, this parameter specifies the chain to fetch contracts for when initialising a contract using the SDK, it| defaults to `42` which is for the `Kovan Network`, but it could potentially be any evm compatible chain.|
 
 ### Getting  the subscribers of a particular channel
 ```Javascript
