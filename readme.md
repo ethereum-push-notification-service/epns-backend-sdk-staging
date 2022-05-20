@@ -30,7 +30,7 @@ const  CHANNEL_PK = '0x000000000000000000000000000000000000000000000000000000000
 const  epnsSdk = new EpnsSDK(CHANNEL_PK);
 
 // get the subscribers to your channel
-const allSubscribers = await epnsSdk.getSubscribers()
+const allSubscribers = await epnsSdk.getSubscribedUsers()
 
 // send a notification to your subscribers
 const response = await epnsSdk.sendNotification(
