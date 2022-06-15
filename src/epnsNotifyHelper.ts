@@ -1,7 +1,6 @@
-import axios from 'axios';
 import { ethers } from 'ethers';
+import CryptoJS from 'crypto-js';
 import { EPNSSettings } from '.';
-import config from './config';
 import { postReq } from './config/axios';
 
 export default {
@@ -48,6 +47,73 @@ export default {
       op: 'write',
     };
     return backendPayload;
+  },
+
+  generateOffChainSignatureV2: async (
+    communicatorDetails: EPNSSettings,
+    payload: any,
+    channelPrivateKey: any,
+    recipientAddr: any,
+    channelAddress: any,
+  ) => {
+    // define the signing parameters
+    const chainId: string = communicatorDetails.network;
+    const verifyingContract = communicatorDetails.contractAddress;
+
+    // define an interface to a wallet to sign the parameters
+    const wallet = new ethers.Wallet(channelPrivateKey);
+
+    const DOMAIN = {
+      name: 'EPNS COMM V1',
+      chainId: parseInt(chainId),
+      verifyingContract,
+    };
+    const TYPE = {
+      Data: [
+        { name: 'acta', type: 'string' },
+        { name: 'aimg', type: 'string' },
+        { name: 'amsg', type: 'string' },
+        { name: 'asub', type: 'string' },
+        { name: 'type', type: 'string' },
+        { name: 'secret', type: 'string' },
+      ],
+    };
+
+    const MESSAGE = { ...payload.data };
+    const signature = await wallet._signTypedData(DOMAIN, TYPE, MESSAGE);
+    
+    const getPayloadIdentity = (_type: string, _payload: any) => {
+      // step 1: hash the whole payload
+      const payloadHash = CryptoJS.SHA256(JSON.stringify(_payload)).toString(CryptoJS.enc.Hex);
+
+      console.log('payloadHash: ', payloadHash);
+
+      // step 2: create the string in the format of `2+${<PAYLOAD_HASH>}`
+      const formattedPayload = `${MESSAGE.type}+${payloadHash}`;
+      // step 3: convert it to bytes
+      const identityBytes =  ethers.utils.toUtf8Bytes(formattedPayload);
+
+      console.log('identityBytes: ', identityBytes);
+      return identityBytes;
+    }
+
+    const offchainPayload = {
+      // transaction hash is the signature generated after user signs the messgae using EIP-712
+      transaction_hash: signature,
+      // bytes[2+hash(payload)]
+      identity: getPayloadIdentity(MESSAGE.type, payload),
+      //channel address
+      channel: channelAddress,
+      //Recipient address
+      recipient: recipientAddr,
+      // source of notification (from eth or polygon)
+      blockchain:"ETH_TEST_KOVAN",
+      //The whole payload
+      payload: payload
+    
+    }
+
+    return offchainPayload;
   },
 
   sendOffchainNotification: async (backendPayload: any) => {

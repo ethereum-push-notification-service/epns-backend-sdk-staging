@@ -1,6 +1,7 @@
 import { postReq, getReq } from './config/axios';
 import epnsNotify from './epnsNotifyHelper';
 import { ethers } from 'ethers';
+import _get from 'lodash.get';
 import logger from './logger';
 import config from './config';
 
@@ -47,6 +48,12 @@ export type SupportedChains = '42' | '80001' | '1' | '137';
 const DEFAULT_NETWORK_SETTINGS: NetWorkSettings = {};
 const DEFAULT_NOTIFICATION_CHAIN: SupportedChains = '42';
 const DEFAULT_NETWORK_TO_MONITOR = '1';
+
+export interface ISendNotificationOptions {
+  recipient: string | [string];
+  contractAddress: string;
+  contractABI: string;
+}
 
 export default class NotificationHelper {
   private channelKey: string;
@@ -189,6 +196,9 @@ export default class NotificationHelper {
       );
       if (returnPayload) return offChainPayload;
 
+      console.log('offChainPayload:   \n', offChainPayload);
+
+
       const response = await epnsNotify.sendOffchainNotification(offChainPayload);
 
       return response;
@@ -229,6 +239,129 @@ export default class NotificationHelper {
       logger, // Logger instance (or console.log) to pass
       simulate,
     );
+    return tx;
+  }
+
+  public async sendNotificationV2(options : any) {
+    /**
+     * PARAMS details
+     * 
+     * NOTIFICATION TYPE
+     * -----------------
+     * notificationType = 1 (broadcast), recipient = channelAddress 
+     * notificationType = 3 (targetted), recipient = address passed to the recipient
+     * notificationType = 4 (subset), recipient = [addr1, addr2]
+     */
+
+    let {
+      recipient,
+      pushTitle,
+      pushMessage,
+      title,
+      message,
+      notificationType,
+      cta,
+      img,
+
+      offChain = true,
+      returnPayload = false,
+      
+      // Dev Params
+      simulate,
+      
+    } = options || {};
+
+
+    pushTitle = pushTitle || title;
+    pushMessage = pushMessage || message;
+
+    const channelAddress = this.channelAddress;
+    
+    let user = recipient.toString(); // if [addr1, addr2, ...] then converts to a comma-delimited string
+
+    // OFF-CHAIN send notification
+    if (offChain) {
+      const txOverride = _get(simulate, 'txOverride', {});
+
+      if (txOverride.mode) {
+        if (txOverride.recipientAddr) {
+          user = txOverride.recipientAddr;
+        }
+
+        if (txOverride.notifType) {
+          notificationType = txOverride.notifType;
+        }
+      }
+
+      const payload: any = await this.getPayload(
+        pushTitle,
+        pushMessage,
+        title,
+        message,
+        notificationType,
+        cta,
+        img,
+        null,
+      );
+
+      const offChainPayload = await epnsNotify.generateOffChainSignatureV2(
+        this.epnsCommunicatorSettings,
+        payload,
+        this.channelKey,
+        user,
+        channelAddress,
+      );
+
+      if (returnPayload) return offChainPayload;
+
+      console.log('offChainPayload V2 ----> :   \n', offChainPayload);
+
+      const response = await epnsNotify.sendOffchainNotification(offChainPayload);
+
+      return response;
+    }
+
+    // ON-CHAIN send notification
+
+    // if its not offchain, then require key parameters be passed in
+    if (!this.epnsCommunicator) {
+      throw new Error(
+        'Initialize using an alchemy key or Infura parameters or an etherscan keys when initialising the constructor',
+      );
+    }
+
+    // get IPFS hash
+    const hash = await this.getPayloadHash(
+      user,
+      pushTitle,
+      pushMessage,
+      title,
+      message,
+      notificationType,
+      cta,
+      img,
+      simulate,
+    );
+
+    // Send notification
+    const ipfshash = hash.ipfshash;
+    const payloadType = hash.payloadType;
+
+    const storageType = 1; // IPFS Storage Type
+    const txConfirmWait = 1; // Wait for 0 tx confirmation
+
+    const tx = await epnsNotify.sendNotification(
+      this.epnsCommunicator.signingContract, // Contract connected to signing wallet
+      channelAddress,
+      user, // Recipient to which the payload should be sent
+      payloadType, // Notification Type
+      storageType, // Notificattion Storage Type
+      ipfshash, // Notification Storage Pointer
+      txConfirmWait, // Should wait for transaction confirmation
+      logger, // Logger instance (or console.log) to pass
+      simulate,
+    );
+    
     return tx;
   }
 
