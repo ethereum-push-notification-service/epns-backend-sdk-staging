@@ -1,7 +1,5 @@
-import axios from 'axios';
 import { ethers } from 'ethers';
-import { EPNSSettings } from '.';
-import config from './config';
+import { EPNSSettings } from './types';
 import { postReq } from './config/axios';
 
 export default {

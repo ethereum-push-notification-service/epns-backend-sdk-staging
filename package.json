@@ -27,12 +27,14 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.24.0",
+    "crypto-js": "^4.1.1",
     "ethers": "^5.5.1",
     "ipfs-http-client": "^50.1.1",
     "moment": "^2.29.1",
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
     "@types/node": "^15.9.0",
     "prettier": "^2.3.0",
     "ts-node": "^10.0.0",
